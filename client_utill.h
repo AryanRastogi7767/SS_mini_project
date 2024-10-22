@@ -24,11 +24,13 @@
 #define ACTDCT 1
 #define REVIEW 2
 #define PASS 3
+#define MAN_EXIT 4
+#define ADD_CUST 1
+#define EMP_MOD 2
+#define VIEW_LOANS 3
+#define PROCESS_LOANS 4
+#define EMP_EXIT 5
 long long int generateAccountNo();
-struct sequence{
-	int s_no;
-};
-
 struct hist
 {
   long long int account_no;
@@ -53,97 +55,31 @@ struct account_info{
 	long long int account_no;
 	double balance;
 	char account_type;//c-current,s-saveing,o-other
-	int s_no;
+	//int s_no;
   char feedback[100];
 	struct user_info user;
 	int status;
+  int login;
 };
 struct data_packet{
 	int action;
 	struct account_info account;
   struct hist passbook_entries[10];
 	int result;
-//	char *result_msg;
 };
 void printAccountDetails(struct account_info account){
 	printf("**************** %s ******************\n",account.user.name_1);
 	printf("Account_No\t :: %lld\nUser_Id\t\t :: %lld\nPassword\t :: %s\nEmail\t\t :: %s\n",account.account_no,account.user.u_id,account.user.password,account.user.email);
 	if(account.account_type=='j'){printf("Name\t\t :: %s\nName\t\t :: %s\n",account.user.name_1,account.user.name_2);}
 	else{printf("Name\t\t :: %s\n",account.user.name_1);}
-	printf("City \t\t :: %s\nState \t\t :: %s\nCountry \t :: %s\nMobile no \t :: %lld\nPin code \t :: %lld\nSequence No \t :: %d\nBalance \t :: %lf\nStatus \t\t :: %d\n",account.user.city,account.user.state,account.user.country,account.user.mobile_no,account.user.pin_code,account.s_no,account.balance,account.status);
+	printf("City \t\t :: %s\nState \t\t :: %s\nCountry \t :: %s\nMobile no \t :: %lld\nPin code \t :: %lld\nBalance \t :: %lf\nStatus \t\t :: %d\n",account.user.city,account.user.state,account.user.country,account.user.mobile_no,account.user.pin_code,account.balance,account.status);
 	
 
 }
-int readSequence(){
-	int fd;
-	size_t s;
-	fd=open("sequence",O_RDONLY);
-	struct sequence ds;
-	struct flock lock;
-	lock.l_type=F_RDLCK;
-	lock.l_whence=SEEK_SET;
-	lock.l_start=0;
-	lock.l_len=0;
-	lock.l_pid=getpid();
-//	printf("File Discripter value :: %d, Process id %ld\n",fd,(long)getpid());
-//	printf("Before Entering To Critical Section\n");
-	int i=fcntl(fd,F_SETLKW,&lock);
-	if(i!=-1){
-		//printf("Locking Status :: %d",i);
-		//printf("Entering Critical Section\n");
-		/*CS Start*/
-		s=read(fd,&ds,sizeof(ds));
-		//printf("CS :: Initial Ticket No :: %d\n Press <Enter> To Exit..\n",ds.ticketNo);
-		lock.l_type=F_UNLCK;
-		int u=fcntl(fd,F_SETLK,&lock);
-//		printf("Exiting CS... Unlocking Status :: %d",u);
-		/*CS End*/
-		}
-		close(fd);
-		if(s>0)return ds.s_no;
-		else return -1;
-}
-int getSquence(struct sequence ds){
-	int fd;
-	size_t s;
-	fd=open("sequence",O_WRONLY);
-//	struct sequence ds;
-	struct flock lock;
-	lock.l_type=F_WRLCK;
-	lock.l_whence=SEEK_SET;
-	lock.l_start=0;
-	lock.l_len=0;
-	lock.l_pid=getpid();
-//	printf("File Discripter value :: %d, Process id %ld\n",fd,(long)getpid());
-//	printf("Before Entering To Critical Section\n");
-	int i=fcntl(fd,F_SETLKW,&lock);
-	if(i!=-1){
-		//printf("Locking Status :: %d",i);
-		//printf("Entering Critical Section\n");
-		/*CS Start*/
-		
-		//printf("CS :: Initial Ticket No :: %d\n",ds.ticketNo);
-		//ds.ticketNo++;
-		//fd=open("sequence",O_WRONLY);
-		//lseek(fd,0,SEEK_CUR);
-		s=write(fd,&ds,sizeof(ds));
-		//close(fd);
-		//printf("CS :: Ticket Booked!! Ticket No :: %d\nPress Enter To Exit\n",ds.ticketNo);
-		//getchar();
-		lock.l_type=F_UNLCK;
-		int u=fcntl(fd,F_SETLK,&lock);
-		//printf("Exiting CS... Unlocking Status :: %d",u);
-		/*CS End*/
-		close(fd);
-		}
-		if(s>0)return ds.s_no;
-		else return -1;
-}
-struct account_info getDetails(int seq_no){
+struct account_info getDetails(char user_type){
 		struct account_info account;
 		printf("****************** Enter User Details ****************");
 		account.account_no=generateAccountNo();
-		account.s_no=seq_no;
 		account.status=1;//active
 		struct user_info user;
 		 while(1){
@@ -163,11 +99,6 @@ struct account_info getDetails(int seq_no){
 		user.u_id=account.account_no;
 		printf("Enter Password\n");
 		scanf(" %10[^\n]",user.password);
-		/*while(1){
-		printf("Enter Account Type\nc - Current Account\ns - Saving Account\nj - Joint Account\n");
-		scanf("%c",&account.account_type);
-		if(account.account_type=='c'||account.account_type=='s'||account.account_type=='j')break;
-		}*/
 		printf("Enter City\n");
 		scanf(" %10[^\n]",user.city);
 		printf("Enter State\n");
@@ -181,9 +112,11 @@ struct account_info getDetails(int seq_no){
 		printf("Enter Email Id\n");
 		scanf(" %50[^\n]",user.email);
 		while(1){
-		printf("Enter User Type\na - Admin\nn - Normal User\n");
+    if(user_type == 'e'){user.user_type = 'c'; break;}
+    else{
+		printf("Enter User Type\na - Admin\nn - Normal User\nm - manager\ne - employee\n");
 		scanf("%c",&user.user_type);
-		if(user.user_type=='a'||user.user_type=='n')break;
+		if(user.user_type=='a'||user.user_type=='n')break;}
 		}
 		account.user=user;
 		return account;
@@ -193,54 +126,9 @@ long long int generateAccountNo(){
  	long long int random=rand()%10000000;
 	return random;
 }
-// int updateRecord(struct account_info account,int record_no){
-// 	int fd;
-// 	fd=open("account",O_WRONLY);
-// 	struct flock lock;
-// 	size_t s=0;
-// 	off_t off=lseek(fd,(record_no*sizeof(account)),SEEK_SET);
-// 	lock.l_type=F_WRLCK;
-// 	lock.l_whence=SEEK_CUR;
-// 	lock.l_start=0;
-// 	lock.l_len=sizeof(account);
-// 	lock.l_pid=getpid();
-// 	printf("File Discripter value :: %d, Process id %ld\n",fd,(long)getpid());
-// 	printf("Before Entering To Critical Section\n");
-// 	int i=fcntl(fd,F_SETLKW,&lock);
-// 	if(i!=-1){
-// 		printf("Locking Status :: %d\n",i);
-// 		printf("Entering Critical Section\n");
-// 		/*CS Start*/
-// 		//s=write(fd,&account,sizeof(struct account_info));
-// 		//getchar();
-// 		/*For testing locking*/
-// 		/*char ch;
-// 		printf("Enter (y,Y) To Confirm\n");
-// 		scanf(" %c", &ch);*/
-// 		s=write(fd,&account,sizeof(struct account_info));
-// 		lock.l_type=F_UNLCK;
-// 		int u=fcntl(fd,F_SETLK,&lock);
-// 		printf("Exiting CS... Unlocking Status :: %d\n",u);
-// 		/*CS End*/
-// 		}else{
-// 		printf("Lock Not Accquired");
-// 		}
-// 		close(fd);
-// 		return s;
-// }
-struct account_info getNewAccountDetails(){
-		struct sequence seq;
+struct account_info getNewAccountDetails(char user_type){
+
 		struct account_info account={0};
-		int seq_no=readSequence();
-		//printf("Initial Sequence No %d\n",seq.s_no);
-		if(seq_no>=0){
-		seq.s_no=seq_no+1;
-		//printf("New Sequence No %d\n",seq.s_no);
-		seq_no=getSquence(seq);
-		//printf("Final Sequence No %d\n",seq_no);
-		}	
-		if(seq_no>0){
-		account=getDetails(seq_no);
-		}
+		account=getDetails(user_type);
 		return account;
 }

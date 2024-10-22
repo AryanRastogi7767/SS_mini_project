@@ -22,10 +22,10 @@ struct account_info{
 	long long int account_no;
 	double balance;
 	char account_type;//c-current,s-saveing,o-other
-	int s_no;
 	char feedback[100];
   struct user_info user;
 	int status;
+  int login;
 };
 
 void printAccountDetails(struct account_info account){
@@ -33,7 +33,7 @@ void printAccountDetails(struct account_info account){
 	printf("Account_No\t :: %lld\nUser_Id\t\t :: %lld\nPassword\t :: %s\nEmail\t\t :: %s\n",account.account_no,account.user.u_id,account.user.password,account.user.email);
 	if(account.account_type=='j'){printf("Name\t\t :: %s\nName\t\t :: %s\n",account.user.name_1,account.user.name_2);}
 	else{printf("Name\t\t :: %s\n",account.user.name_1);}
-	printf("City \t\t :: %s\nState \t\t :: %s\nCountry \t :: %s\nMobile no \t :: %lld\nPin code \t :: %lld\nSequence No \t :: %d\nBalance \t :: %lf\nStatus \t\t :: %d\n",account.user.city,account.user.state,account.user.country,account.user.mobile_no,account.user.pin_code,account.s_no,account.balance,account.status);
+	printf("City \t\t :: %s\nState \t\t :: %s\nCountry \t :: %s\nMobile no \t :: %lld\nPin code \t :: %lld \nBalance \t :: %lf\nStatus \t\t :: %d\nLogin \t\t :: %d\n",account.user.city,account.user.state,account.user.country,account.user.mobile_no,account.user.pin_code,account.balance,account.status, account.login);
 	
 
 }

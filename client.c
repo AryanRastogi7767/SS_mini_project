@@ -26,18 +26,24 @@ int main(){
 	scanf("%lld",&request.account.account_no);
 	printf("ENTER PASSWORD: \t");
 	scanf(" %10[^\n]",request.account.user.password);
-	printf("%lld,%s\n",request.account.account_no,request.account.user.password);
+//	printf("%lld,%s\n",request.account.account_no,request.account.user.password);
 	request.action=GET_ACC;
 	request.result=-1;
 	response=execute(request);
-	printf("Response Status :: %d\n",response.result);
+//	printf("Response Status :: %d\n",response.result);
   
-  printf("Request acc num: %lld\n", request.account.account_no);
+//  printf("Request acc num: %lld\n", request.account.account_no);
 
-  printf("Response acc num: %lld\n", response.account.account_no);
+ // printf("Response acc num: %lld\n", response.account.account_no);
+  if(response.account.login == 0){
 	if(request.account.account_no==response.account.account_no){
 	if(strcmp(request.account.user.password,response.account.user.password) == 0){
-		//login success
+		response.account.login = 1;  // Mark the user as logged in
+    response.action = UPDATE;  // Update the account information
+    response.result = -1;
+    response = execute(response);  // Save the update
+    printf("Login successful.\n");
+        //login success
 		printf("LOGIN SUCCESS : Account Details Are\n");
 		printAccountDetails(response.account);
 		if(response.account.user.user_type=='n'){
@@ -45,7 +51,7 @@ int main(){
 			printf("Weclome User :: %s\n",response.account.user.name_1);
 			int choice,ch;
 			do{
-			printf("Enter Choice:\n\n");
+
 			printf("1. Deposit\n");
 			printf("2. Withdraw\n");
 			printf("3. Balance Enquiry\n");
@@ -56,7 +62,9 @@ int main(){
       printf("8. Add Feedback\n");
       printf("9. View Transaction History\n");
 			printf("10.Exit\n");
+		  printf("Enter Choice: ");
 			scanf("%d",&choice);
+      printf("\n");
 			switch(choice){
 			case Deposit:{
 				double amount;
@@ -228,6 +236,11 @@ int main(){
 
             break;}
 			case Exit:{
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
 				exit(0);
 				break;}
 
@@ -235,6 +248,15 @@ int main(){
 			}
 			printf("Do You Want To Continue (Press 1)\n");
 			scanf("%d",&ch);
+      if(ch != 1)
+      {
+      response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+
+      }
 			}while(ch==1);
 
 		}else if(response.account.user.user_type=='a'){
@@ -242,16 +264,17 @@ int main(){
 			int choice,ch;
 			printf("Weclome Admin :: %s\n",response.account.user.name_1);
 			do{
-			printf("Enter Choice\n");
-			printf("1.Add New Account\n");
+					printf("1.Add New Account\n");
 			printf("2.Delete An Account\n");
 			printf("3.Modify Details or Roles\n");
 			printf("4.Search An Account\n");
 			printf("5.Exit\n");
+    	printf("Enter Choice: ");
 			scanf("%d",&choice);
+      printf("\n");
 			switch(choice){
 			case ADD:{
-				struct account_info account=getNewAccountDetails();
+				struct account_info account=getNewAccountDetails(response.account.user.user_type);
 				if(account.account_no>0){
 				struct data_packet a_request,a_response={0};
 				a_request.action=CREATE;
@@ -298,17 +321,19 @@ int main(){
 					printf("7.Email\n");
           printf("8.Roles\n");
           printf("9.Password\n");
-					printf("10.Exit\n");
+        	printf("Enter Choice: ");
 					scanf("%d",&m_choice);
+          printf("\n");
+          struct data_packet a_request,a_response={0};
+					printf("Enter Account No To Update Details:\n");
+					scanf("%lld",&a_request.account.account_no);
+					a_request.action=GET_ACC;
+					a_request.result=-1;
+					a_response=execute(a_request);
+
 					switch(m_choice){
 					case 1:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update Name\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
-						if(a_response.result>0&&a_response.account.status>0){
+							if(a_response.result>0&&a_response.account.status>0){
 							if(a_response.account.account_type=='j'){
 							printf("Enter User Name\n");
 							scanf(" %20[^\n]",a_response.account.user.name_1);
@@ -330,13 +355,7 @@ int main(){
 						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
 					break;}
 					case 2:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update City\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
-						if(a_response.result>0&&a_response.account.status>0){
+							if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter City\n");
 							scanf(" %10[^\n]",a_response.account.user.city);
 							a_request=a_response;
@@ -351,12 +370,6 @@ int main(){
 						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}							
 					break;}
 					case 3:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update State\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
 						if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter State\n");
 							scanf(" %10[^\n]",a_response.account.user.state);
@@ -373,12 +386,6 @@ int main(){
 				
 					break;}
 					case 4:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update Country\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
 						if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter Country\n");
 							scanf(" %10[^\n]",a_response.account.user.country);
@@ -395,12 +402,6 @@ int main(){
 				
 					break;}
 					case 5:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update Pin Code\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
 						if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter Pin Code\n");
 							scanf("%lld",&a_response.account.user.pin_code);
@@ -417,12 +418,6 @@ int main(){
 
 					break;}
 					case 6:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update Mobile No\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
 						if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter Mobile No\n");
 							scanf("%lld",&a_response.account.user.mobile_no);
@@ -439,12 +434,6 @@ int main(){
 					
 					break;}
 					case 7:{
-						struct data_packet a_request,a_response={0};
-						printf("Enter Account No To Update Email\n");
-						scanf("%lld",&a_request.account.account_no);
-						a_request.action=GET_ACC;
-						a_request.result=-1;
-						a_response=execute(a_request);
 						if(a_response.result>0&&a_response.account.status>0){
 							printf("Enter Email Id\n");
 							scanf(" %50[^\n]",a_response.account.user.email);
@@ -460,92 +449,41 @@ int main(){
 						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
 					break;}
 
-case 8:{
-    struct data_packet a_request, a_response = {0};
-    printf("Enter Account No To Change User Role\n");
-    scanf("%lld", &a_request.account.account_no);
-
-    // Clear the input buffer after scanf
-    getchar(); // Consume the leftover newline character
-    
-    a_request.action = GET_ACC;
-    a_request.result = -1;
-    a_response = execute(a_request);
-    printf("acc num to chenge role: %lld\n", a_response.account.account_no);
-    if (a_response.result > 0 && a_response.account.status > 0) {
-        // Display the current user role
-        if (a_response.account.user.user_type == 'n') {
-            printf("User is a customer.\n");
-        } else if (a_response.account.user.user_type == 'm') {
-            printf("User is a manager.\n");
-        } else if (a_response.account.user.user_type == 'e') {
-            printf("User is an employee.\n");
-        } else {
-            printf("User is an admin.\n");
+          case 8:{
+             if (a_response.result > 0 && a_response.account.status > 0) {
+               // Display the current user role
+             if (a_response.account.user.user_type == 'n') {
+              printf("User is a customer.\n");
+              } else if (a_response.account.user.user_type == 'm') {
+              printf("User is a manager.\n");
+              } else if (a_response.account.user.user_type == 'e') {
+              printf("User is an employee.\n");
+              } else {
+              printf("User is an admin.\n");
         }
 
-        // Now, ask for the new role and handle input correctly
-        printf("Enter New Role (n for customer, m for manager, e for employee, a for admin): \n");
+              // Now, ask for the new role and handle input correctly
+              printf("Enter New Role (n for customer, m for manager, e for employee, a for admin): \n");
         
-        // Use getchar() to properly handle single-character input
-        a_response.account.user.user_type = getchar();
+             // Use getchar() to properly handle single-character input
+             a_response.account.user.user_type = getchar();
         
-        a_request = a_response;
-        a_request.action = UPDATE;
-        a_request.result = -1;
-        a_response = execute(a_request);
+             a_request = a_response;
+             a_request.action = UPDATE;
+             a_request.result = -1;
+             a_response = execute(a_request);
 
-        if (a_response.result > 0) {
+            if (a_response.result > 0) {
             printf("Transaction Success! User Role Updated Successfully\n");
-        } else {
+           } else {
             printf("Sorry! Unable to Update User Role for Account No %lld\n", a_request.account.account_no);
-        }
-    } else {
+           }
+      } else {
         printf("Sorry! Unable to Fetch Account for Account No %lld\n", a_request.account.account_no);
     }
     break;
 }
-     /*      case 8:{ */
-     /*          struct data_packet a_request,a_response={0}; */
-					/* 	printf("Enter Account No To Change User Role\n"); */
-					/* 	scanf("%lld",&a_request.account.account_no); */
-					/* 	a_request.action=GET_ACC; */
-					/* 	a_request.result=-1; */
-					/* 	a_response=execute(a_request); */
-					/**/
-					/* 	if(a_response.result>0&&a_response.account.status>0){ */
-     /*          if(a_response.account.user.user_type == 'n') */
-     /*          { */
-     /*            printf("User is a customer.\n"); */
-     /*            } */
-     /*          else if(a_response.account.user.user_type == 'm') */
-     /*          { */
-     /*            printf("User is a manager.\n"); */
-     /*                  } */
-     /*          else if(a_response.account.user.user_type == 'e') */
-     /*          { */
-     /*            printf("User is a employee.\n"); */
-     /*                  } */
-     /*          else */
-     /*          { */
-     /*            printf("User is admin."); */
-     /*                  } */
-     /*           */
-     /*          getchar(); */
-					/* 		printf("Enter New Role: \n"); */
-					/* 		scanf("%c",&a_response.account.user.user_type); */
-					/* 		a_request=a_response; */
-					/* 		a_request.action=UPDATE; */
-					/* 		a_request.result=-1; */
-					/* 		a_response=execute(a_request); */
-					/* 		if(a_response.result>0){ */
-					/* 		printf("Transaction Success !! User Role Updated Successfully\n"); */
-					/* 		} */
-					/* 		else{printf("Sorry !! Unable To Update User Role For Account No %lld\n",a_request.account.account_no);} */
-					/* 	} */
-					/* 	else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		 */
-					/* break;} */
-          case 9:{
+      case 9:{
           struct data_packet a_request,a_response={0};
 						printf("Enter Account No To Update Password\n");
 						scanf("%lld",&a_request.account.account_no);
@@ -567,9 +505,6 @@ case 8:{
 						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
 					break;
                   }
-					case 10:{
-						exit(0);
-					break;}
 					default:{printf("Invalid Choice :: %d\n",m_choice);}
 					}
 					printf("Do You Want To Continue (Press 1 Modify Menu)\n");
@@ -590,23 +525,39 @@ case 8:{
 				else{printf("Sorry !! Unable To Fatch Account For Account No %lld\n",a_request.account.account_no);}
 				break;}
 			case ADMIN_EXIT:{
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+
 				exit(0);
 				break;}
 			default:{printf("Invalid Choice :: %d\n",choice);}
 			}
 			printf("Do You Want To Continue (Press 1)\n");
 			scanf("%d",&ch);
+      if(ch != 1){
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+}
 			}while(ch==1);
+
+    //manager
 		}else if(response.account.user.user_type=='m'){
 			int choice,ch;
 			printf("Weclome Manager :: %s\n",response.account.user.name_1);
 			do{
-			printf("Enter Choice\n");
 			printf("1.Activate / Deactivate Customer Accounts\n");
 			printf("2.Review Customer Feedback\n");
 			printf("3.Change Password\n");
-			printf("4.Exit\n");
+			printf("4.Logout and Exit\n");
+			printf("Enter Choice\n");
 			scanf("%d",&choice);
+      printf("\n");
 			switch(choice){
 			case ACTDCT:{
           struct data_packet a_request,a_response={0};
@@ -615,7 +566,7 @@ case 8:{
 						a_request.action=GET_ACC;
 						a_request.result=-1;
 						a_response=execute(a_request);
-						if(a_response.result>0&&a_response.account.status>0&&a_response.account.user.user_type != 'a'){
+						if(a_response.result>0&&a_response.account.user.user_type != 'a'){
 							int t;
               if(a_response.account.status == 0)
               {
@@ -631,8 +582,6 @@ case 8:{
                   if(t == 1){a_response.account.status = 0;
                     printf("Account de-activated successfully!!\n");}
                   else{printf("Account not de-activated.\n");}
-
-
               }
 							a_request=a_response;
 							a_request.action=UPDATE;
@@ -680,14 +629,267 @@ case 8:{
 						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
 					break;
                   }
-          } 
-      }while(ch == 1);}
-    else{
+			case MAN_EXIT:{
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+
+				exit(0);
+				break;}
+			default:{printf("Invalid Choice :: %d\n",choice);}
+			}
+			printf("Do You Want To Continue (Press 1)\n");
+			scanf("%d",&ch);
+      if(ch != 1){
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+        }
+			}while(ch==1);}
+      else if(response.account.user.user_type=='e'){
+			int choice,ch;
+			printf("Weclome Employee :: %s\n",response.account.user.name_1);
+			do{
+			printf("1.Add New Customer\n");
+			printf("2.Modify Customer Details\n");
+			printf("3.View Assigned Loan Applications\n");
+      printf("4.Process Loan Applications\n");
+			printf("5.Logout and Exit\n");
+			printf("Enter Choice\n");
+			scanf("%d",&choice);
+      printf("\n");
+			switch(choice){
+			case ADD_CUST:{
+ 			struct account_info account=getNewAccountDetails(response.account.user.user_type);
+				if(account.account_no>0){
+				struct data_packet a_request,a_response={0};
+				a_request.action=CREATE;
+				a_request.result=-1;
+				a_request.account=account;
+				a_response=execute(a_request);
+				if(response.result>0){printf("Transaction Success !! New Account Successfully Created\nDetails Are..\n");
+				printAccountDetails(a_response.account);
+				}
+				else{printf("Sorry !! Transaction Fail. Account Creating Fail\n");}
+				}
+				else{printf("Sorry !! Account Creating Fail \n");}
+				break; 
+                  }
+      case EMP_MOD:{
+				int m_choice,m_ch;
+				do{
+					printf("Choose What Wants To Update\n");
+					printf("1.Update Name\n");
+					printf("2.City\n");
+					printf("3.State\n");
+					printf("4.Country\n");
+					printf("5.Pin Code\n");
+					printf("6.Mobile No\n");
+					printf("7.Email\n");
+          printf("8.Roles\n");
+          printf("9.Password\n");
+        	printf("Enter Choice: ");
+					scanf("%d",&m_choice);
+          printf("\n");
+          struct data_packet a_request,a_response={0};
+					printf("Enter Account No To Update Details\n");
+					scanf("%lld",&a_request.account.account_no);
+					a_request.action=GET_ACC;
+					a_request.result=-1;
+					a_response=execute(a_request);
+          if(a_response.account.user.user_type == 'n'){
+					switch(m_choice){
+					case 1:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							if(a_response.account.account_type=='j'){
+							printf("Enter User Name\n");
+							scanf(" %20[^\n]",a_response.account.user.name_1);
+							printf("Enter Second User Name\n");
+							scanf(" %20[^\n]",a_response.account.user.name_2);
+							}else{
+							printf("Enter User Name\n");
+							scanf(" %20[^\n]",a_response.account.user.name_1);
+							}
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Name Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Name For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+            //}else{printf("Employee cannot change admin's, manager's and other employees")}
+					break;}
+					case 2:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter City\n");
+							scanf(" %10[^\n]",a_response.account.user.city);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! City Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update City For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}							
+					break;}
+					case 3:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter State\n");
+							scanf(" %10[^\n]",a_response.account.user.state);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! State Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update State For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+				
+					break;}
+					case 4:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter Country\n");
+							scanf(" %10[^\n]",a_response.account.user.country);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Country Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Country For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+				
+					break;}
+					case 5:{
+	
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter Pin Code\n");
+							scanf("%lld",&a_response.account.user.pin_code);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Pin Code Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Pin Code For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+
+					break;}
+					case 6:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter Mobile No\n");
+							scanf("%lld",&a_response.account.user.mobile_no);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Mobile No Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Mobile No For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+					
+					break;}
+					case 7:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter Email Id\n");
+							scanf(" %50[^\n]",a_response.account.user.email);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Email Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Email For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+					break;}
+
+      case 8:{
+          printf("Bank Employees are not allowed to change roles!!\n");
+        break;}
+      case 9:{
+
+						if(a_response.result>0&&a_response.account.status>0){
+							printf("Enter New Password\n");
+							scanf(" %50[^\n]",a_response.account.user.password);
+							a_request=a_response;
+							a_request.action=UPDATE;
+							a_request.result=-1;
+							a_response=execute(a_request);
+							if(a_response.result>0){
+							printf("Transaction Success !! Password Updated Successfully\n");
+							}
+							else{printf("Sorry !! Unable To Update Password For Account No %lld\n",a_request.account.account_no);}
+						}
+						else{printf("Sorry !! Unable To Fetch Account For Account No %lld\n",a_request.account.account_no);}		
+					break;
+                  }
+					default:{printf("Invalid Choice :: %d\n",m_choice);}
+					}}else{printf("Bank Employee can only change csutomer details!!\n");}
+					printf("Do You Want To Continue (Press 1 Modify Menu)\n");
+					scanf("%d",&m_ch);
+					}while(m_ch==1);			
+				break;
+						}
+      case VIEW_LOANS:{
+                  break;}
+			case PROCESS_LOANS:{
+				break;}
+      case EMP_EXIT:{
+         response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+
+				exit(0);
+				break; }
+
+			default:{printf("Invalid Choice :: %d\n",choice);}
+			}
+			printf("Do You Want To Continue (Press 1)\n");
+			scanf("%d",&ch);
+      if(ch != 1){
+        response.account.login = 0;  // Mark the user as logged out
+        response.action = UPDATE;  // Update the account information
+        response.result = -1;
+        response = execute(response);  // Save the update
+        if(response.result > 0)printf("Logout successful.\n");
+        }
+			}while(ch==1);}
+
+      else{
 			printf("Invalid Password :: %c\n",request.account.user.user_type);
 		}
 
 	}else{printf("Invalid Password :: %s\n",request.account.user.password);}
 	}else{printf("Invalid Account No :: %lld\n",request.account.account_no);}
+}
+  else{printf("User logged in already!\n");}
 }
 
 struct data_packet execute(struct data_packet request_packet){

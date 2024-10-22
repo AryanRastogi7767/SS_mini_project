@@ -64,6 +64,15 @@ int main(){
 			response.result=fetchTransactionHistory(response, request);
 			response.account=request.account;
 
+// Example server-side logging
+for (int j = 0; j < 10; j++) {
+    printf("Sending Entry %d: Acc Num: %lld, Balance: %.2f, Type: %c, Amount: %.2f\n",
+           j, response.passbook_entries[j].account_no,
+           response.passbook_entries[j].balance,
+           response.passbook_entries[j].t_type,
+           response.passbook_entries[j].amount);
+}
+
 
     break;}
 		default:{
