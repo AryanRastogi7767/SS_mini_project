@@ -30,11 +30,6 @@ int main(){
 	request.action=GET_ACC;
 	request.result=-1;
 	response=execute(request);
-//	printf("Response Status :: %d\n",response.result);
-  
-//  printf("Request acc num: %lld\n", request.account.account_no);
-
- // printf("Response acc num: %lld\n", response.account.account_no);
   if(response.account.login == 0){
 	if(request.account.account_no==response.account.account_no){
 	if(strcmp(request.account.user.password,response.account.user.password) == 0){

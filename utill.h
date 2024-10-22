@@ -189,49 +189,6 @@ int updateRecord(struct account_info account,int record_no){
 		close(fd);
 		return s;
 }
-// struct account_info getDetails(){
-// 		struct account_info account;
-// 		printf("****************** Enter User Details ****************");
-// 		account.account_no=generateAccountNo();
-// 		account.status=1;//active
-// 		struct user_info user;
-// 		 while(1){
-//                  printf("Enter Account Type\nc - Current Account\ns - Saving Account\nj - Joint Account\n");
-//                  scanf("%c",&account.account_type);
-//                  if(account.account_type=='c'||account.account_type=='s'||account.account_type=='j')break;
-//                  }
-// 		if(account.account_type=='j'){
-// 		printf("Enter User Name\n");
-// 		scanf(" %20[^\n]",user.name_1);
-// 		printf("Enter Second User Name\n");
-// 		scanf(" %20[^\n]",user.name_2);
-// 		}else{
-// 		printf("Enter User Name\n");
-// 		scanf(" %20[^\n]",user.name_1);
-// 		}
-// 		user.u_id=account.account_no;
-// 		printf("Enter Password\n");
-// 		scanf(" %10[^\n]",user.password);
-// 		printf("Enter City\n");
-// 		scanf(" %10[^\n]",user.city);
-// 		printf("Enter State\n");
-// 		scanf(" %10[^\n]",user.state);
-// 		printf("Enter Country\n");
-// 		scanf(" %10[^\n]",user.country);
-// 		printf("Enter Pin Code\n");
-// 		scanf("%lld",&user.pin_code);
-// 		printf("Enter Mobile No\n");
-// 		scanf("%lld",&user.mobile_no);
-// 		printf("Enter Email Id\n");
-// 		scanf(" %50[^\n]",user.email);
-// 		while(1){
-// 		printf("Enter User Type\na - Admin\nn - Normal User\n");
-// 		scanf("%c",&user.user_type);
-// 		if(user.user_type=='a'||user.user_type=='n')break;
-// 		}
-// 		account.user=user;
-// 		return account;
-// }
 struct account_info getRecord(int record_no){
 	int fd;
 	struct account_info account;
@@ -263,62 +220,59 @@ struct account_info getRecord(int record_no){
 		return account;
 }
 
-int fetchTransactionHistory(struct data_packet response,struct data_packet request)
+int fetchTransactionHistory(struct data_packet *response,struct data_packet request)
 {
-  int fd = open("passbook", O_RDONLY);
-  struct hist temp;
-  int i = 0;
-  while(read(fd, &temp,sizeof(struct hist)))
-  {
-       if(i<10)
-    {
-        printf("%lld\t%lld\n", temp.account_no, request.account.account_no);
+  // int fd = open("passbook", O_RDONLY);
+  // struct hist temp;
+  // int i = 0;
+  // while(read(fd, &temp,sizeof(struct hist)))
+  // {
+  //      if(i<10)
+  //   {
+  //       printf("%lld\t%lld\n", temp.account_no, request.account.account_no);
+  //
+  //     if((temp.account_no - request.account.account_no) == 0)
+  //     {response.passbook_entries[i] = temp;
+  //       printf("ACC: %lld",temp.account_no);
+  //       printf("Balance: %lf", temp.balance);
+  //     // {response.passbook_entries[i].account_no = temp.account_no;
+  //     // response.passbook_entries[i].balance = temp.balance;
+  //     // response.passbook_entries[i].t_type = temp.t_type;
+  //     // response.passbook_entries[i].amount = temp.amount;}
+  //     i++;
+  //   }
+  //   }
+  //   else
+  //   {
+  //     break;
+  //   }
+  // }
+  // return 1;
+    int fd = open("passbook", O_RDONLY);
+    if (fd == -1) {
+        perror("Error opening passbook file");
+        return -1; // Error code
+    }
 
-      if((temp.account_no - request.account.account_no) == 0)
-      {response.passbook_entries[i] = temp;
-        printf("ACC: %lld",temp.account_no);
-        printf("Balance: %lf", temp.balance);
-      // {response.passbook_entries[i].account_no = temp.account_no;
-      // response.passbook_entries[i].balance = temp.balance;
-      // response.passbook_entries[i].t_type = temp.t_type;
-      // response.passbook_entries[i].amount = temp.amount;}
-      i++;
+    struct hist temp;
+    int count = 0; // Number of entries found
+
+    // Read entries until the end of the file or we find 10 entries
+    while (read(fd, &temp, sizeof(struct hist)) > 0 && count < 10) {
+        printf("temp acc: %lld , req acc: %lld\n", temp.account_no, request.account.account_no);
+        if (temp.account_no == request.account.account_no) {
+          printf("account no matching!!\n");
+            
+            response->passbook_entries[count].account_no = temp.account_no;
+            response->passbook_entries[count].balance = temp.balance;
+            response->passbook_entries[count].t_type = temp.t_type;
+            response->passbook_entries[count].amount = temp.amount;
+            count++;
+        }
     }
-    }
-    else
-    {
-      break;
-    }
-  }
-  return 1;
+
+    close(fd); // Close the file descriptor
+    return count; // Return the number of entries found
 }
 
-// int createNewAccount(){
-//
-// 		struct account_info account=getDetails();
-// 		int status=openAccount(account);
-// 		if(status>0){
-// 			printf("Account Created ... Account details are\n");
-// 			printAccountDetails(account);
-// 		}else{
-// 			printf("Sorry :: Account Creation Fail..\n");
-// 		}
-//   return 1;
-// }
-//
-// struct account_info getNewAccountDetails(){
-//
-// 		struct account_info account={0};
-// 		account=getDetails();
-// 		return account;
-// }
-// int createAdmin(){
-// 		struct account_info account=getDetails();
-// 		int status=updateRecord(account,0);
-// 		if(status>0){
-// 			printf("Account Created ... Account details are\n");
-// 			printAccountDetails(account);
-// 		}else{
-// 			printf("Sorry :: Account Creation Fail..\n");
-// 		}			
-// }
+
